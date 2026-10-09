@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradeMate AI</title>
+<style>
+:root{--bg:#0b0e14;--panel:#131822;--p2:#1a2130;--line:#232c3d;--text:#e8edf5;--mute:#7d8aa3;--up:#26c281;--down:#f0506e;--acc:#4c9aff;--amb:#f5b942;--pur:#b184ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select{font:inherit;color:inherit}
+header{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+.logo{font-size:19px;font-weight:800}.logo span{color:var(--acc)}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px}
+.seg button{background:none;border:0;border-radius:6px;padding:6px 16px;font-weight:700;color:var(--mute);cursor:pointer}
+.seg button.on{background:var(--acc);color:#fff}.seg button.on.lv{background:var(--down)}
+.mood{padding:5px 12px;border-radius:20px;font-weight:700;font-size:12px;background:var(--p2);color:var(--mute)}
+.mood.Bullish{background:#10351f;color:var(--up)}.mood.Bearish{background:#3a1520;color:var(--down)}
+.mood.Choppy{background:#3a3010;color:var(--amb)}.mood.Volatile{background:#2c2150;color:var(--pur)}
+.src{font-size:11px;color:var(--mute);max-width:380px}.src.ok{color:var(--up)}.src.bad{color:var(--down)}
+.stats{display:flex;gap:20px}.stats small{display:block;color:var(--mute);font-size:10px;text-transform:uppercase;letter-spacing:.5px}.stats b{font-size:16px}
+.livebar{background:#3a1520;color:#ffb3c0;text-align:center;padding:6px;font-weight:600;font-size:13px;border-bottom:1px solid var(--down)}
+.errbar{background:#3a3010;color:#ffe29a;padding:8px 20px;font-size:12px;border-bottom:1px solid var(--amb);display:none}
+main{display:grid;grid-template-columns:250px 1fr 280px;gap:14px;padding:14px 20px}
+@media(max-width:1000px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.card h2{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.wide{grid-column:1/-1}
+input,select{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+input[type=checkbox]{width:auto}
+label{display:block;color:var(--mute);font-size:12px;margin:10px 0 4px}
+#list{max-height:430px;overflow:auto;margin-top:8px}
+.w{display:flex;justify-content:space-between;padding:8px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.w:hover,.w.sel{background:var(--p2)}.w.sel{border-color:var(--line)}
+.nm{color:var(--mute);font-size:11px}.r{text-align:right}.up{color:var(--up)}.down{color:var(--down)}
+.tag{background:#1b2c4a;color:var(--acc);font-size:9px;padding:1px 5px;border-radius:4px;margin-left:5px;font-weight:700}
+.tabs{display:flex;gap:4px;margin-top:8px}.tabs button{flex:1;background:var(--p2);border:1px solid var(--line);border-radius:6px;padding:4px;font-size:12px;color:var(--mute);cursor:pointer}
+.tabs button.on{color:var(--text);border-color:var(--acc)}
+.big{font-size:28px;font-weight:800}canvas{width:100%;height:290px;display:block}
+.btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btns button{flex:1;padding:10px;border:0;border-radius:8px;font-weight:700;cursor:pointer;color:#fff;min-width:80px}
+.buy{background:var(--up)}.sell{background:var(--down)}.stop{background:#3a4458}.go{background:var(--acc)}
+.quick{display:flex;gap:6px;margin-top:6px}.quick button{flex:1;background:var(--p2);border:1px solid var(--line);border-radius:6px;padding:3px;font-size:11px;color:var(--mute);cursor:pointer}
+#cf{margin-top:10px;background:#3a1520;border:1px solid var(--down);border-radius:8px;padding:10px;font-size:13px;display:none}
+#msg{margin-top:10px;font-size:12px;min-height:16px}
+.warn{background:#3a3010;border:1px solid var(--amb);color:#ffe29a;border-radius:8px;padding:10px;font-size:12px;margin-bottom:10px}
+.three{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px}
+@media(max-width:1000px){.three{grid-template-columns:1fr}}
+.three ul{list-style:none}.three li{padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.idea{padding:8px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;font-size:12px}
+.idea button{float:right;background:var(--acc);border:0;border-radius:6px;color:#fff;padding:3px 10px;cursor:pointer;font-size:11px}
+.pill{font-size:10px;padding:1px 7px;border-radius:10px;background:var(--p2);color:var(--mute);margin-left:6px}
+#chat{height:200px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;margin-bottom:8px}
+#chat p{margin-bottom:8px}#chat .me{color:var(--acc)}
+table{width:100%;border-collapse:collapse}th{color:var(--mute);font-weight:500;font-size:11px;text-transform:uppercase;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;text-align:right;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}
+.empty{color:var(--mute);padding:12px 0;text-align:center}
+#act{max-height:200px;overflow:auto;font-size:12px;color:var(--mute);white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace}
+.pos2{display:grid;grid-template-columns:2fr 1fr;gap:14px}@media(max-width:1000px){.pos2{grid-template-columns:1fr}}
+small.d{color:var(--mute);font-size:11px;display:block;margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Trade<span>Mate</span> AI</div>
+  <div class="seg" id="modeSw"><button data-m="paper" class="on">Paper</button><button data-m="live">Live</button></div>
+  <div class="mood" id="mood">Analyzing...</div>
+  <div class="src" id="src">Loading Yahoo Finance prices...</div>
+  <div class="stats">
+    <div><small>Equity</small><b id="eq">-</b></div>
+    <div><small>Cash</small><b id="cash">-</b></div>
+    <div><small id="plL">P/L</small><b id="pl">-</b></div>
+  </div>
+</header>
+<div class="errbar" id="errbar"></div>
+<div class="livebar" id="liveBar" style="display:none">LIVE MODE: orders go to your real brokerage account. You confirm every order.</div>
+
+<main>
+  <section class="card">
+    <h2>Markets <span class="pill">3 ETFs + 100 stocks</span></h2>
+    <input id="search" placeholder="Search symbol or name...">
+    <div class="tabs" id="ftabs"><button data-f="all" class="on">All</button><button data-f="etf">ETFs</button><button data-f="stock">Stocks</button></div>
+    <div id="list"></div>
+  </section>
+
+  <section class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px">
+      <div><div id="cSym" style="font-weight:700"></div><div class="big" id="cPrice"></div></div>
+      <div id="cChg" style="font-weight:700"></div>
+    </div>
+    <canvas id="chart"></canvas>
+    <small class="d">Line = daily closes plus the latest price, dashed = 20-day average. Prices from Yahoo Finance, may be delayed up to 15 minutes. Not financial advice.</small>
+  </section>
+
+  <section class="card">
+    <h2>Order ticket <span class="pill" id="tSym"></span></h2>
+    <label>Quantity (shares)</label>
+    <input id="qty" type="number" min="1" step="1" value="10">
+    <div class="quick"><button data-p=".25">25%</button><button data-p=".5">50%</button><button data-p="1">Max</button></div>
+    <label>Estimated total</label><input id="est" disabled>
+    <div class="btns"><button class="buy" onclick="order('buy')">Buy</button><button class="sell" onclick="order('sell')">Sell</button></div>
+    <div id="cf"></div>
+    <div id="msg"></div>
+    <div id="autoBox" style="margin-top:12px"><label style="display:flex;gap:8px;align-items:center;margin:0"><input type="checkbox" id="auto"> Let the assistant trade my paper account</label></div>
+  </section>
+
+  <section class="card wide" id="connect" style="display:none">
+    <h2>Connect your broker (Alpaca) for Live mode</h2>
+    <div class="warn">Live trading risks real money and you can lose it. Keys stay in this page's memory only and are never saved, but anyone with access to this browser tab could use them. Start with the <b>paper (test)</b> endpoint, which uses fake money. Never share your secret key. This is not financial advice. Prices still come from Yahoo Finance; Alpaca is only used for your account and orders.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+      <div><label>API key ID</label><input id="k" autocomplete="off"></div>
+      <div><label>Secret key</label><input id="sc" type="password" autocomplete="off"></div>
+      <div><label>Endpoint</label><select id="ep"><option value="paper">Alpaca paper (test, fake money)</option><option value="live">Alpaca LIVE (real money)</option></select></div>
+      <div><label>Max single order ($)</label><input id="maxo" type="number" value="1000"></div>
+    </div>
+    <div class="btns"><button class="go" onclick="connect()" style="max-width:200px">Connect</button></div>
+    <div id="cstat" style="margin-top:8px;font-size:12px;color:var(--mute)">Not connected.</div>
+  </section>
+
+  <section class="card wide">
+    <h2>AI assistant <span class="pill">rule-based market analysis, not financial advice</span></h2>
+    <div class="three">
+      <div><h2>Market read</h2><div id="read"></div></div>
+      <div><h2>Ideas</h2><div id="ideas"></div></div>
+      <div><h2>Ask the assistant</h2>
+        <div id="chat"></div>
+        <div style="display:flex;gap:6px"><input id="ask" placeholder="Try: how's the market? / analyze NVDA / what should I buy?"><button class="go" onclick="send()" style="border:0;border-radius:8px;padding:0 14px;color:#fff;cursor:pointer;font-weight:700">Ask</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card wide">
+    <div class="pos2">
+      <div><h2>Your positions</h2>
+        <table><thead><tr><th>Symbol</th><th>Qty</th><th>Avg cost</th><th>Price</th><th>P/L</th><th>AI view</th><th></th></tr></thead><tbody id="pos"></tbody></table></div>
+      <div><h2>Activity</h2><div id="act"></div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>n.toLocaleString('en-US',{style:'currency',currency:'USD'});
+const pc=n=>(n>=0?'+':'')+(n*100).toFixed(2)+'%';
+const cls=n=>n>=0?'up':'down';
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+// ---------- universe: 3 ETFs + 100 companies (Yahoo Finance ticker symbols) ----------
+const GROUPS=[
+['ETF',1,`SPY:S&P 500 ETF,QQQ:Nasdaq-100 ETF,IWM:Russell 2000 ETF`],
+['Tech',1.2,`AAPL:Apple,MSFT:Microsoft,NVDA:NVIDIA,GOOGL:Alphabet,AMZN:Amazon,META:Meta Platforms,TSLA:Tesla,AVGO:Broadcom,ORCL:Oracle,ADBE:Adobe,CRM:Salesforce,AMD:AMD,INTC:Intel,CSCO:Cisco,QCOM:Qualcomm,TXN:Texas Instruments,IBM:IBM,NOW:ServiceNow,INTU:Intuit,AMAT:Applied Materials,MU:Micron,PLTR:Palantir,SHOP:Shopify,UBER:Uber,NFLX:Netflix`],
+['Finance',1.05,`JPM:JPMorgan,BAC:Bank of America,WFC:Wells Fargo,GS:Goldman Sachs,MS:Morgan Stanley,V:Visa,MA:Mastercard,AXP:American Express,BLK:BlackRock,C:Citigroup,SCHW:Charles Schwab,PYPL:PayPal`],
+['Health',0.7,`JNJ:Johnson & Johnson,UNH:UnitedHealth,LLY:Eli Lilly,PFE:Pfizer,MRK:Merck,ABBV:AbbVie,TMO:Thermo Fisher,ABT:Abbott,AMGN:Amgen,BMY:Bristol Myers,GILD:Gilead,CVS:CVS Health,MDT:Medtronic,ISRG:Intuitive Surgical`],
+['Consumer',0.7,`WMT:Walmart,COST:Costco,HD:Home Depot,MCD:McDonald's,NKE:Nike,SBUX:Starbucks,KO:Coca-Cola,PEP:PepsiCo,PG:Procter & Gamble,DIS:Disney,TGT:Target,LOW:Lowe's,CMG:Chipotle,MDLZ:Mondelez,PM:Philip Morris,MO:Altria`],
+['Industrial',0.95,`XOM:Exxon Mobil,CVX:Chevron,COP:ConocoPhillips,CAT:Caterpillar,DE:Deere,BA:Boeing,GE:GE Aerospace,HON:Honeywell,UPS:UPS,LMT:Lockheed Martin,RTX:RTX,MMM:3M,UNP:Union Pacific,SLB:Schlumberger,OXY:Occidental`],
+['Other',0.85,`T:AT&T,VZ:Verizon,TMUS:T-Mobile,NEE:NextEra Energy,DUK:Duke Energy,SO:Southern Co,LIN:Linde,SPGI:S&P Global,AMT:American Tower,PLD:Prologis,F:Ford,GM:General Motors,ABNB:Airbnb,COIN:Coinbase,DAL:Delta Air Lines,SNOW:Snowflake,PANW:Palo Alto Networks,CRWD:CrowdStrike`]
+];
+const U=[],M={};
+GROUPS.forEach(([sec,beta,str])=>str.split(',').forEach(x=>{
+  const [s,n]=x.split(':'),etf=sec==='ETF';
+  U.push(M[s]={s,n,sec,etf,beta:s==='IWM'?1.2:s==='QQQ'?1.15:beta,d:{price:0,prev:0,bars:[],hist:[],ok:false}});
+}));
+
+// ---------- state ----------
+let mode='paper',sel='AAPL',flt='all',qry='',pending=null;
+let paper={cash:100000,pos:{}};
+let live={on:false,cash:0,equity:0,start:0,pos:{}};
+const L={key:'',sec:'',paper:true};
+const ready=m=>m.d.ok&&m.d.price>0;
+const ser=m=>{const d=m.d;return d.hist.length&&d.price>0?d.hist.concat(d.price):d.hist};
+const acts=[];
+function log(t){acts.unshift(new Date().toLocaleTimeString()+'  '+t);if(acts.length>40)acts.pop();$('act').textContent=acts.join('\n')}
+function save(){try{localStorage.setItem('trademate_v5',JSON.stringify({paper}))}catch(e){}}
+(function(){try{const s=JSON.parse(localStorage.getItem('trademate_v5'));if(s&&s.paper)paper=s.paper}catch(e){}})();
+
+// ---------- Yahoo Finance prices ----------
+// Route 1 (reliable): the Netlify function in netlify/functions/yahoo.js fetches Yahoo server-side.
+// Route 2 (fallback, often blocked): the browser tries Yahoo directly or through public CORS proxies.
+const YH='https://query1.finance.yahoo.com';
+const PROXIES=[p=>YH+p,p=>'https://corsproxy.io/?'+encodeURIComponent(YH+p),p=>'https://api.allorigins.win/raw?url='+encodeURIComponent(YH+p)];
+let route='fn',fnErr='',lastOk=0,okStreak=0;
+async function viaFunction(syms,range){
+  const r=await fetch('/.netlify/functions/yahoo?range='+range+'&symbols='+encodeURIComponent(syms.join(',')));
+  if(!r.ok)throw new Error('the price function returned HTTP '+r.status);
+  if(!(r.headers.get('content-type')||'').includes('json'))throw new Error('the price function is not deployed on this site');
+  return r.json();
+}
+async function directOne(s,range){
+  const p='/v8/finance/chart/'+encodeURIComponent(s)+'?range='+range+'&interval=1d&includePrePost=false';
+  let err;
+  for(const f of PROXIES){
+    try{
+      const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),8000);
+      const r=await fetch(f(p),{signal:ctl.signal});clearTimeout(t);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const j=await r.json(),res=j.chart&&j.chart.result&&j.chart.result[0];
+      if(!res)throw new Error('no data');
+      const m=res.meta;
+      return{meta:{regularMarketPrice:m.regularMarketPrice,regularMarketTime:m.regularMarketTime,gmtoffset:m.gmtoffset,chartPreviousClose:m.chartPreviousClose},
+        t:res.timestamp||[],c:(res.indicators.quote[0]||{}).close||[]};
+    }catch(e){err=e}
+  }
+  return{error:String(err&&err.message||err)};
+}
+async function yfetch(syms,range){
+  if(route==='fn'){
+    try{const o=await viaFunction(syms,range);fnErr='';return o}
+    catch(e){fnErr=e.message;route='direct'}
+  }
+  const o={};await Promise.all(syms.map(async s=>{o[s]=await directOne(s,range)}));return o;
+}
+function apply(m,o){
+  if(!o||o.error||!o.meta||!(o.meta.regularMarketPrice>0))return false;
+  const meta=o.meta,off=meta.gmtoffset||0,dk=t=>new Date((t+off)*1000).toISOString().slice(0,10);
+  const map=new Map(m.d.bars);
+  (o.t||[]).forEach((t,i)=>{if(o.c[i]!=null)map.set(dk(t),o.c[i])});
+  m.d.bars=[...map].sort((a,b)=>a[0]<b[0]?-1:1).slice(-130);
+  const today=meta.regularMarketTime?dk(meta.regularMarketTime):'9999-12-31';
+  m.d.hist=m.d.bars.filter(b=>b[0]<today).map(b=>b[1]);
+  m.d.price=meta.regularMarketPrice;
+  m.d.prev=m.d.hist.length?m.d.hist[m.d.hist.length-1]:(meta.chartPreviousClose||m.d.price);
+  m.d.ok=true;return true;
+}
+async function loadAll(full){
+  const chunks=[];for(let i=0;i<U.length;i+=10)chunks.push(U.slice(i,i+10));
+  const fails=[];let ci=0;
+  async function worker(){while(ci<chunks.length){const ch=chunks[ci++];
+    try{const res=await yfetch(ch.map(m=>m.s),full?'6mo':'5d');ch.forEach(m=>{if(!apply(m,res[m.s])&&!m.d.ok)fails.push(m.s)})}
+    catch(e){ch.forEach(m=>{if(!m.d.ok)fails.push(m.s)})}}}
+  await Promise.all([worker(),worker(),worker()]);
+  const n=U.filter(ready).length;
+  if(n>0){lastOk=Date.now()}
+  setSrc(n,fails);
+  const bar=$('errbar');
+  if(n===0){bar.style.display='block';bar.textContent='Could not reach Yahoo Finance prices. '+(fnErr?'Reason: '+fnErr+'. ':'')+'Deploy the whole folder (index.html, netlify.toml and netlify/functions/yahoo.js) to Netlify. Retrying every 60 seconds.'}
+  else if(route==='direct'&&fnErr){bar.style.display='block';bar.textContent='Prices are loading through a fallback route because the Netlify function is not available ('+fnErr+'). Deploy netlify/functions/yahoo.js for reliable prices.'}
+  else bar.style.display='none';
+  return n;
+}
+function setSrc(n,fails){
+  const e=$('src');
+  if(n===0){e.className='src bad';e.textContent='Could not reach Yahoo Finance. Retrying...';return}
+  e.className='src ok';
+  e.textContent='Yahoo Finance · '+n+'/'+U.length+' prices · updated '+new Date(lastOk).toLocaleTimeString()+(fails&&fails.length?' · no data: '+fails.slice(0,5).join(', ')+(fails.length>5?'…':''):'');
+}
+
+// ---------- indicators ----------
+const sma=(a,n)=>{n=Math.min(n,a.length);let s=0;for(let i=a.length-n;i<a.length;i++)s+=a[i];return s/n};
+const rets=a=>{const r=[];for(let i=1;i<a.length;i++)r.push(a[i]/a[i-1]-1);return r};
+const sd=a=>{const m=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length)};
+function rsi(a){let u=0,d=0;for(let i=a.length-14;i<a.length;i++){const c=a[i]-a[i-1];if(c>0)u+=c;else d-=c}return d===0?100:100-100/(1+u/d)}
+function analyze(m){
+  const h=ser(m);if(h.length<30)return null;
+  const p=h[h.length-1],s20=sma(h,20),s50=sma(h,50),r20=p/h[h.length-21]-1;
+  const R=rets(h.slice(-61)),v=sd(R.slice(-20)),v60=sd(R),rs=rsi(h);let sc=0;const why=[];
+  if(p>s20&&s20>s50){sc+=2;why.push('uptrend (price above its 20 and 50 averages)')}
+  else if(p<s20&&s20<s50){sc-=2;why.push('downtrend (price below its 20 and 50 averages)')}
+  else why.push('no clear trend');
+  if(r20>.02){sc+=1;why.push('strong recent momentum '+pc(r20))}else if(r20<-.02){sc-=1;why.push('weak recent momentum '+pc(r20))}
+  if(rs>75){sc-=2;why.push('overbought (RSI '+rs.toFixed(0)+'), pullback risk')}
+  else if(rs<30){sc+=1;why.push('oversold (RSI '+rs.toFixed(0)+'), bounce setup')}
+  else if(rs>50&&rs<70)sc+=1;
+  return{p,s20,s50,r20,v,v60,rs,sc,why};
+}
+function market(){
+  const e=['SPY','QQQ','IWM'].map(s=>({s,a:analyze(M[s])}));if(e.some(x=>!x.a))return null;
+  let tr=0;e.forEach(x=>{if(x.a.p>x.a.s20&&x.a.s20>x.a.s50)tr++;else if(x.a.p<x.a.s20&&x.a.s20<x.a.s50)tr--});
+  const volx=e[0].a.v/(e[0].a.v60||1);
+  const mood=(volx>1.5&&tr<1)?'Volatile':tr>=2?'Bullish':tr<=-2?'Bearish':'Choppy';
+  let up=0,n=0;U.forEach(m=>{if(m.etf)return;const h=ser(m);if(h.length<20)return;n++;if(h[h.length-1]>sma(h,20))up++});
+  const leader=e.slice().sort((a,b)=>b.a.r20-a.a.r20)[0];
+  return{mood,etf:e,breadth:n?up/n*100:0,leader};
+}
+
+// ---------- account ----------
+function acct(){
+  if(mode==='paper'){let h=0;for(const s in paper.pos)h+=paper.pos[s].qty*(ready(M[s])?M[s].d.price:paper.pos[s].avg);return{cash:paper.cash,pos:paper.pos,eq:paper.cash+h,start:100000}}
+  return{cash:live.cash,pos:live.pos,eq:live.equity,start:live.start||live.equity};
+}
+
+// ---------- ideas & advice ----------
+function ideas(){
+  const mk=market(),def=mk&&(mk.mood==='Bearish'||mk.mood==='Volatile'),A=acct(),out=[];
+  if(!(A.eq>0))return out;
+  U.forEach(m=>{if(A.pos[m.s]||!ready(m))return;const a=analyze(m);if(!a)return;
+    let adj=a.sc;if(def){adj-=(m.beta-1)*2;if(m.sec==='Health'||m.sec==='Consumer')adj+=1}
+    const sp=Math.max(.02,3*a.v),cap=def?.06:.1;
+    const q=Math.floor(Math.min(A.eq*.01/(a.p*sp),A.eq*cap/a.p,A.cash*.95/a.p));
+    out.push({m,a,adj,q,stop:a.p*(1-sp),sp});});
+  return out.sort((x,y)=>y.adj-x.adj);
+}
+function portfolioTips(){
+  const A=acct(),o=[],ks=Object.keys(A.pos);
+  if(!(A.eq>0))return o;
+  if(!ks.length){o.push('You hold no positions yet. Consider building gradually and spreading across several names and ETFs.');return o}
+  o.push('Cash is '+(A.cash/A.eq*100).toFixed(0)+'% of your account.');
+  ks.forEach(s=>{const p=M[s]?M[s].d.price:0;if(!p)return;const w=A.pos[s].qty*p/A.eq,r=p/A.pos[s].avg-1;
+    if(w>.3)o.push('<b>'+s+'</b> is '+(w*100).toFixed(0)+'% of your account, which is a lot in one position.');
+    if(r<-.08)o.push('<b>'+s+'</b> is down '+(r*100).toFixed(1)+'% from your cost. Decide your exit plan before it gets worse.')});
+  return o;
+}
+const ADV={
+  Bullish:'Trend is up. Favor strong stocks and ETFs above their averages, buy pullbacks rather than chasing spikes, and use trailing stops.',
+  Bearish:'Trend is down. Hold more cash, favor defensive areas (health, consumer staples), avoid catching falling knives, and keep position sizes small.',
+  Choppy:'No clear direction. Avoid chasing breakouts, take profits sooner, and wait for a clearer trend before sizing up.',
+  Volatile:'Swings are unusually large. Cut position sizes, use wider stops, and avoid forcing trades.'};
+const LEAD={SPY:'Large caps are leading, which is a steady, quality-led market.',QQQ:'Tech-heavy Nasdaq-100 is leading, so growth and mega-cap tech are driving the market.',IWM:'Small caps are leading, which usually signals broad risk appetite.'};
+function tips(mk){
+  const t=['<b>'+mk.mood+' market.</b> '+ADV[mk.mood],
+    mk.etf.map(x=>'<b>'+x.s+'</b> <span class="'+cls(x.a.r20)+'">'+pc(x.a.r20)+'</span>').join(' · ')+' over 20 days. '+LEAD[mk.leader.s]];
+  if(mk.etf[0].a.r20-mk.etf[2].a.r20>.03)t.push('Small caps (IWM) lag the S&P 500, so breadth is narrow. Be selective.');
+  t.push('Breadth: '+mk.breadth.toFixed(0)+'% of the 100 stocks are above their 20-day average ('+(mk.breadth>65?'broad strength':mk.breadth<35?'broad weakness':'mixed')+').');
+  return t.concat(portfolioTips());
+}
+function explain(s){
+  const m=M[s],a=analyze(m);
+  if(!a)return s+': not enough data yet.';
+  const bias=a.sc>=3?'positive':a.sc>=1?'mildly positive':a.sc<=-2?'negative':a.sc<0?'mildly negative':'neutral';
+  return '<b>'+s+'</b> ('+esc(m.n)+') at '+fmt(a.p)+'. Technical bias: <b>'+bias+'</b> (score '+a.sc+'). '+a.why.join('; ')+'. RSI '+a.rs.toFixed(0)+'. A volatility-based stop would sit near '+fmt(a.p*(1-Math.max(.02,3*a.v)))+'.';
+}
+function ask(t){
+  const q=t.toLowerCase(),mk=market();
+  const tok=(t.match(/\b[A-Z]{1,5}\b/g)||[]).find(x=>M[x])||(U.find(m=>q.includes(m.n.toLowerCase()))||{}).s;
+  if(tok)return explain(tok);
+  if(!mk)return 'Still gathering data.';
+  if(/etf|spy|qqq|russell|nasdaq|s&p|iwm/.test(q))return tips(mk).slice(0,3).join('<br>');
+  if(/market|mood|trend|doing|outlook/.test(q))return tips(mk).slice(0,4).join('<br>');
+  if(/buy|idea|invest|pick|trade/.test(q)){const i=ideas().filter(x=>x.adj>=2).slice(0,3);
+    return i.length?'Top setups right now: '+i.map(x=>'<b>'+x.m.s+'</b> (score '+x.adj.toFixed(1)+', stop near '+fmt(x.stop)+')').join(', ')+'. Size small and respect the stop.':'No strong setups right now. Waiting is a valid position.'}
+  if(/sell|trim|exit/.test(q)){const w=Object.keys(acct().pos).map(s=>[s,analyze(M[s])]).filter(x=>x[1]&&x[1].sc<=-1);
+    return w.length?'Weak holdings to review: '+w.map(x=>'<b>'+x[0]+'</b>').join(', ')+'.':'None of your holdings look weak right now.'}
+  if(/portfolio|risk|position|account/.test(q))return portfolioTips().join('<br>')||'No data yet.';
+  return 'I can explain the market ("how\'s the market?"), analyze a stock ("analyze NVDA"), suggest ideas ("what should I buy?"), check your portfolio, or flag weak holdings ("what should I sell?").';
+}
+function say2(h,me){const c=$('chat');c.innerHTML+='<p'+(me?' class="me"':'')+'>'+h+'</p>';c.scrollTop=c.scrollHeight}
+function send(){const v=$('ask').value.trim();if(!v)return;$('ask').value='';say2('You: '+esc(v),1);say2(ask(v))}
+$('ask').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+say2('Hi! I read trends, momentum and volatility across the market using Yahoo Finance prices and give educational ideas. I am a rule-based tool, not a financial advisor. Ask me about the market or any symbol.');
+
+// ---------- trading ----------
+function say(t,ok){$('msg').textContent=t;$('msg').className=ok?'up':'down'}
+function paperTrade(side,s,q){
+  if(!ready(M[s]))return{ok:0,msg:'No price for '+s+' yet.'};
+  const p=M[s].d.price,c=q*p,pos=paper.pos[s]||{qty:0,avg:0};
+  if(side==='buy'){if(c>paper.cash)return{ok:0,msg:'Not enough cash.'};pos.avg=(pos.avg*pos.qty+c)/(pos.qty+q);pos.qty+=q;paper.cash-=c}
+  else{if(q>pos.qty)return{ok:0,msg:"You don't own that many shares."};pos.qty-=q;paper.cash+=c}
+  if(pos.qty===0)delete paper.pos[s];else paper.pos[s]=pos;
+  return{ok:1,msg:(side==='buy'?'Bought ':'Sold ')+q+' '+s+' @ '+fmt(p)};
+}
+function order(side){
+  const q=Math.floor(+$('qty').value),m=M[sel].d;
+  if(!(q>0))return say('Enter a valid quantity.',0);
+  if(mode==='paper'){const r=paperTrade(side,sel,q);say(r.msg,r.ok);if(r.ok)log(r.msg);save();return render()}
+  if(!live.on)return say('Connect your broker first.',0);
+  if(!ready(M[sel]))return say('No price for '+sel+' yet.',0);
+  const val=q*m.price,max=+$('maxo').value||0;
+  if(val>max)return say('Order of about '+fmt(val)+' exceeds your max-order limit ('+fmt(max)+'). Raise the limit on purpose if you really mean it.',0);
+  pending={side,s:sel,q};
+  $('cf').style.display='block';
+  $('cf').innerHTML='<b>Confirm '+(L.paper?'TEST':'LIVE')+' '+side.toUpperCase()+' '+q+' '+sel+' (about '+fmt(val)+')?</b>'+(L.paper?'':' <span class="down">This uses real money.</span>')+
+    '<div class="btns"><button class="buy" onclick="confirmOrder()">Confirm</button><button class="stop" onclick="cancelPending()">Cancel</button></div>';
+}
+function cancelPending(){pending=null;$('cf').style.display='none'}
+async function confirmOrder(){
+  const o=pending;cancelPending();if(!o)return;
+  try{await api('/v2/orders','POST',{symbol:o.s,qty:String(o.q),side:o.side,type:'market',time_in_force:'day'});
+    const t='Submitted '+o.side+' '+o.q+' '+o.s+' (market, day)';say(t,1);log(t);await refreshLive()}
+  catch(e){say('Order failed: '+e.message,0);log('Order failed: '+e.message)}
+  render();
+}
+function autoTrade(){
+  if(mode!=='paper'||!$('auto').checked)return;
+  const mk=market();if(!mk)return;
+  for(const s in paper.pos){const a=analyze(M[s]);if(!a)continue;const r=M[s].d.price/paper.pos[s].avg-1;
+    if(a.sc<=-1||r<-Math.max(.02,3*a.v)){const res=paperTrade('sell',s,paper.pos[s].qty);log('Auto: '+res.msg+' ('+(r<0?'stop/weak':'weak')+')')}}
+  if(Object.keys(paper.pos).length<6&&mk.mood!=='Bearish'){const t=ideas()[0];
+    if(t&&t.adj>=3&&t.q>=1){const res=paperTrade('buy',t.m.s,t.q);log('Auto: '+res.msg+' (score '+t.adj.toFixed(1)+')')}}
+  save();
+}
+
+// ---------- brokerage for Live mode only (Alpaca trading API: account, positions, orders) ----------
+async function api(path,method,body){
+  const base=L.paper?'https://paper-api.alpaca.markets':'https://api.alpaca.markets';
+  const r=await fetch(base+path,{method:method||'GET',headers:{'APCA-API-KEY-ID':L.key,'APCA-API-SECRET-KEY':L.sec,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  if(!r.ok)throw new Error((await r.text()).slice(0,200)||r.status);
+  return r.json();
+}
+async function refreshLive(){
+  const a=await api('/v2/account');live.cash=+a.cash;live.equity=+a.equity;live.start=+a.last_equity||live.equity;
+  const ps=await api('/v2/positions');live.pos={};ps.forEach(p=>live.pos[p.symbol]={qty:+p.qty,avg:+p.avg_entry_price});
+}
+async function connect(){
+  L.key=$('k').value.trim();L.sec=$('sc').value.trim();L.paper=$('ep').value==='paper';
+  $('cstat').textContent='Connecting...';
+  try{await refreshLive();live.on=true;
+    $('cstat').textContent='Connected ('+(L.paper?'Alpaca paper endpoint, fake money':'LIVE, REAL MONEY')+').';
+    log('Broker connected ('+(L.paper?'paper':'LIVE')+')')}
+  catch(e){live.on=false;$('cstat').textContent='Failed: '+e.message+'. Check your keys and that the endpoint matches your key type (paper keys only work on the paper endpoint).'}
+  render();renderAssist();
+}
+setInterval(async()=>{if(mode==='live'&&live.on){try{await refreshLive();render()}catch(e){}}},60000);
+
+// ---------- UI ----------
+$('modeSw').addEventListener('click',e=>{
+  const m=e.target.dataset.m;if(!m||m===mode)return;mode=m;cancelPending();
+  [...$('modeSw').children].forEach(b=>{b.classList.toggle('on',b.dataset.m===m);b.classList.toggle('lv',m==='live'&&b.dataset.m==='live')});
+  $('liveBar').style.display=m==='live'?'block':'none';$('connect').style.display=m==='live'?'block':'none';
+  $('autoBox').style.display=m==='paper'?'block':'none';
+  $('plL').textContent=m==='live'?'Today P/L':'P/L';say('',1);render();renderAssist();
+});
+$('search').addEventListener('input',e=>{qry=e.target.value.toLowerCase().trim();renderList()});
+$('ftabs').addEventListener('click',e=>{const f=e.target.dataset.f;if(!f)return;flt=f;[...$('ftabs').children].forEach(b=>b.classList.toggle('on',b.dataset.f===f));renderList()});
+$('list').addEventListener('click',e=>{const w=e.target.closest('.w');if(w)pick(w.dataset.s)});
+function pick(s){sel=s;cancelPending();render();renderAssist()}
+document.querySelector('.quick').addEventListener('click',e=>{const f=+e.target.dataset.p;if(!f)return;
+  const p=M[sel].d.price,A=acct();if(!(p>0))return;$('qty').value=Math.max(1,Math.floor(A.cash/p*f));est()});
+$('qty').addEventListener('input',est);
+function est(){$('est').value=fmt((Math.floor(+$('qty').value)||0)*M[sel].d.price)}
+$('ideas').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;sel=b.dataset.s;$('qty').value=Math.max(1,+b.dataset.q);render();renderAssist();say('Ticket filled for '+sel+'. Review it, then press Buy.',1)});
+$('pos').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;sel=b.dataset.s;$('qty').value=b.dataset.q;render();say('Ticket set to sell your whole '+sel+' position. Press Sell to confirm.',1)});
+
+function renderList(){
+  $('list').innerHTML=U.filter(m=>(flt==='all'||(flt==='etf')===m.etf)&&(!qry||(m.s+' '+m.n).toLowerCase().includes(qry))).map(m=>{
+    const d=m.d,has=ready(m),c=has&&d.prev>0?d.price/d.prev-1:0;
+    return '<div class="w'+(m.s===sel?' sel':'')+'" data-s="'+m.s+'"><div><b>'+m.s+'</b>'+(m.etf?'<span class="tag">ETF</span>':'')+'<div class="nm">'+esc(m.n)+'</div></div><div class="r">'+(has?'<div>'+fmt(d.price)+'</div><div class="'+cls(c)+'">'+pc(c)+'</div>':'<div class="nm">loading...</div>')+'</div></div>'
+  }).join('')||'<div class="empty">No matches</div>';
+}
+function render(){
+  const A=acct(),ok=mode==='paper'||live.on,mk=market();
+  $('eq').textContent=ok?fmt(A.eq):'-';$('cash').textContent=ok?fmt(A.cash):'-';
+  const pl=A.eq-A.start;$('pl').textContent=ok?(pl>=0?'+':'')+fmt(pl):'-';$('pl').className=cls(pl);
+  $('mood').textContent=mk?mk.mood+' market':'Analyzing...';$('mood').className='mood '+(mk?mk.mood:'');
+  const m=M[sel],d=m.d,has=ready(m),c=has&&d.prev>0?d.price/d.prev-1:0;
+  $('cSym').textContent=sel+' · '+m.n;$('cPrice').textContent=has?fmt(d.price):'Loading...';
+  $('cChg').innerHTML=has?'<span class="'+cls(c)+'">'+pc(c)+'</span> <span class="nm">today</span>':'';$('tSym').textContent=sel;est();
+  renderList();drawChart();
+  $('pos').innerHTML=Object.keys(A.pos).map(s=>{
+    const p=A.pos[s],pr=M[s]&&ready(M[s])?M[s].d.price:p.avg,l=(pr-p.avg)*p.qty,a=M[s]?analyze(M[s]):null;
+    const v=!a?'-':a.sc<=-1?'<span class="down">Review / trim</span>':a.sc>=2?'<span class="up">Hold / strong</span>':'Hold';
+    return '<tr><td><b>'+s+'</b></td><td>'+p.qty+'</td><td>'+fmt(p.avg)+'</td><td>'+fmt(pr)+'</td><td class="'+cls(l)+'">'+(l>=0?'+':'')+fmt(l)+' ('+pc(pr/p.avg-1)+')</td><td>'+v+'</td><td><button class="xb" data-s="'+s+'" data-q="'+p.qty+'" style="background:none;border:1px solid var(--line);color:var(--mute);border-radius:5px;cursor:pointer;padding:1px 8px">sell all</button></td></tr>'
+  }).join('')||'<tr><td colspan="7" class="empty">'+(ok?'No open positions.':'Connect your broker to see live positions.')+'</td></tr>';
+}
+function renderAssist(){
+  const mk=market();
+  if(!mk){$('read').innerHTML='<div class="empty">Loading real prices...</div>';$('ideas').innerHTML='';return}
+  $('read').innerHTML='<ul>'+tips(mk).map(t=>'<li>'+t+'</li>').join('')+'</ul>';
+  const top=ideas().filter(x=>x.adj>=2).slice(0,5);
+  $('ideas').innerHTML=top.map(x=>'<div class="idea"><button data-s="'+x.m.s+'" data-q="'+x.q+'">Use</button><b>'+x.m.s+'</b> <span class="pill">score '+x.adj.toFixed(1)+'</span><br>'+x.a.why.join('; ')+'.<br><span style="color:var(--mute)">Size: '+x.q+' sh (about '+fmt(x.q*x.a.p)+') · stop near '+fmt(x.stop)+'</span></div>').join('')
+    ||'<div class="empty">No strong setups right now. Waiting is a valid position.</div>';
+}
+function drawChart(){
+  const c=$('chart'),dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;
+  const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
+  const all=ser(M[sel]);if(all.length<3){x.fillStyle='#7d8aa3';x.font='12px system-ui';x.fillText('Loading...',10,24);return}
+  const d=all.slice(-100),off=all.length-d.length;
+  const ma=d.map((_,i)=>sma(all.slice(0,off+i+1),20));
+  const mn=Math.min(...d,...ma),mx=Math.max(...d,...ma),pad=(mx-mn)*.1||1,lo=mn-pad,hi=mx+pad;
+  const X=i=>i/(d.length-1)*(w-56),Y=v=>h-(v-lo)/(hi-lo)*h,col=d[d.length-1]>=d[0]?'#26c281':'#f0506e';
+  x.font='11px system-ui';x.lineWidth=1;
+  for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4;x.strokeStyle='#232c3d';x.beginPath();x.moveTo(0,Y(v));x.lineTo(w-52,Y(v));x.stroke();x.fillStyle='#7d8aa3';x.fillText(v.toFixed(2),w-48,Y(v)+4)}
+  x.setLineDash([4,4]);x.strokeStyle='#f5b942';x.beginPath();ma.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(X(i),Y(v)));x.stroke();x.setLineDash([]);
+  x.beginPath();d.forEach((v,i)=>i?x.lineTo(X(i),Y(v)):x.moveTo(X(i),Y(v)));x.strokeStyle=col;x.lineWidth=2;x.stroke();
+}
+window.addEventListener('resize',drawChart);
+
+// ---------- main loop ----------
+render();renderAssist();
+let busy=false;
+async function cycle(full){
+  if(busy)return;busy=true;
+  try{await loadAll(full);if(!full)autoTrade()}catch(e){setSrc(0)}
+  busy=false;render();renderAssist();
+}
+cycle(true).then(()=>autoTrade());                    // first load: 6 months of history + prices
+setInterval(()=>cycle(false),60000);                  // refresh prices every 60 seconds
+setInterval(()=>cycle(true),30*60000);                // reload history every 30 minutes
+</script>
+</body>
+</html>
